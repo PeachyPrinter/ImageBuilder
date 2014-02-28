@@ -106,13 +106,33 @@ class ImageBuilderTest(unittest.TestCase):
     test_data_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'test_data')
     source_image_path = os.path.join(test_data_path, 'source_images')
     test_output_file = 'out.png'
+    test_mapper = Mapper([255,255,255], 0)
     
     def setUp(self):
-        if os.path.exists(test_output_file):
-            os.remove(test_output_file)
+        if os.path.exists(self.test_output_file):
+            os.remove(self.test_output_file)
 
-    def ImageBuilder_should_throw_exception_if_no_images_found(self):
+    def test_ImageBuilder_should_throw_exception_if_bad_directory_found(self):
         source_folder = "does_not_exist"
-        ImageBuilder()
+        passed = False
+        
+        try:
+            ImageBuilder(source_folder, self.test_output_file, self.test_mapper)
+            passed = False
+        except:
+            passed = True
+
+        self.assertTrue(passed)
+
+    def test_ImageBuilder_should_throw_exception_if_no_images(self):
+        source_folder = os.path.dirname(os.path.abspath(__file__))
+
+        try:
+            ImageBuilder(source_folder, self.test_output_file, self.test_mapper)
+            passed = False
+        except Exception as ex:
+            passed = True
+
+        self.assertTrue(passed)
 
 unittest.main()
