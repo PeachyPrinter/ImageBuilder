@@ -6,6 +6,7 @@ import cv2
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..','src'))
 
 from mapper import Mapper
+from image_builder import ImageBuilder
 
 class MapperTest(unittest.TestCase):
     test_data_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'test_data')
@@ -104,8 +105,14 @@ class MapperTest(unittest.TestCase):
 class ImageBuilderTest(unittest.TestCase):
     test_data_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'test_data')
     source_image_path = os.path.join(test_data_path, 'source_images')
+    test_output_file = 'out.png'
+    
+    def setUp(self):
+        if os.path.exists(test_output_file):
+            os.remove(test_output_file)
 
-    def bla(self):
-        pass
+    def ImageBuilder_should_throw_exception_if_no_images_found(self):
+        source_folder = "does_not_exist"
+        ImageBuilder()
 
 unittest.main()
