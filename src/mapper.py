@@ -47,7 +47,6 @@ class Mapper(object):
         array = self.get_threshold_array(img)
         return [ self._get_first_point(array[row]) for row in range(img.shape[0]) ]
         
-
     def get_points(self,img):
         self.info('MATCH R: %d G: %d B: %d' % (self.r_match,self.g_match, self.b_match))
         return self._get_first_points(img)

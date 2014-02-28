@@ -8,7 +8,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..'
 from mapper import Mapper
 
 class MapperTest(unittest.TestCase):
-    test_data_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'TestData')
+    test_data_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'test_data')
 
     def test_given_an_image_point_map_returned(self):
         img = cv2.imread(os.path.join(self.test_data_path,'SimpleTestImage1.png'),1)
@@ -99,5 +99,13 @@ class MapperTest(unittest.TestCase):
         new_result = mapper.get_points(img)
         self.assertEquals(new_expected,new_result)
 
+    # TODO JT 2014-02-28 - Test should be wrapped around thresholdmap as it's now public
+
+class ImageBuilderTest(unittest.TestCase):
+    test_data_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'test_data')
+    source_image_path = os.path.join(test_data_path, 'source_images')
+
+    def bla(self):
+        pass
 
 unittest.main()
