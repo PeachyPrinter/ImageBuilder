@@ -8,4 +8,9 @@ Requirements
 
 * Python 2.7
 * OpenCV for Python
+* numpy
 
+Test Requirments
+================
+
+* mock for Python

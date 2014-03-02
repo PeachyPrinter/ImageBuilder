@@ -2,11 +2,16 @@ import unittest
 import os
 import sys
 import cv2
+import numpy
+from numpy import array, uint8
+from mock import patch
+from testhelpers import TestHelpers
+
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..','src'))
 
 from mapper import Mapper
-from image_builder import ImageBuilder
+from image_builder import ImageBuilder, ImageBuilderApi
 
 class MapperTest(unittest.TestCase):
     test_data_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'test_data')
@@ -102,22 +107,46 @@ class MapperTest(unittest.TestCase):
 
     # TODO JT 2014-02-28 - Test should be wrapped around thresholdmap as it's now public
 
+class ImageBuilderApiTest(unittest.TestCase, TestHelpers):
+    test_image_1 = array([[[255, 255, 255],[0, 0, 0],[  0,   0,   0]]], dtype=uint8)
+    test_image_2 = array([[[255, 255, 255],[0, 0, 0],[  0,   0,   0]]], dtype=uint8)
+    test_image_3 = array([[[255, 255, 255],[0, 0, 0],[  0,   0,   0]]], dtype=uint8)
+
+    @patch('mapper.Mapper')
+    def test_given_an_empty_seq_should_return_None(self, mock_mapper):
+        iba = ImageBuilderApi(mock_mapper)
+        result = iba.merge([])
+        self.assertEquals(None, result)
+        self.assertFalse(mock_mapper.called)
+
+    @patch('mapper.Mapper')
+    def test_given_an_image_seq_of_one_should_return_image(self, mock_mapper):
+        mock = mock_mapper.return_value
+        mock.get_threshold_array.return_value = self.test_image_1
+        iba = ImageBuilderApi(mock)
+        
+        result = iba.merge([self.test_image_2])
+        
+        self.assertNumpyArrayEquals(self.test_image_1, result)
+        self.assertEquals(1, mock.get_threshold_array.call_count)
+
 class ImageBuilderTest(unittest.TestCase):
     test_data_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'test_data')
     source_image_path = os.path.join(test_data_path, 'source_images')
     test_output_file = 'out.png'
-    test_mapper = Mapper([255,255,255], 0)
+    stub_image_builder_api = None
     
     def setUp(self):
         if os.path.exists(self.test_output_file):
             os.remove(self.test_output_file)
+        self.stub_image_builder_api = StubImageBuilderApi()
 
     def test_ImageBuilder_should_throw_exception_if_bad_directory_found(self):
         source_folder = "does_not_exist"
         passed = False
         
         try:
-            ImageBuilder(source_folder, self.test_output_file, self.test_mapper)
+            ImageBuilder(source_folder, self.test_output_file, self.stub_image_builder_api)
             passed = False
         except:
             passed = True
@@ -128,11 +157,23 @@ class ImageBuilderTest(unittest.TestCase):
         source_folder = os.path.dirname(os.path.abspath(__file__))
 
         try:
-            ImageBuilder(source_folder, self.test_output_file, self.test_mapper)
+            ImageBuilder(source_folder, self.test_output_file, self.stub_image_builder_api)
             passed = False
         except Exception as ex:
             passed = True
 
         self.assertTrue(passed)
+
+class StubImageBuilderApi(object):
+    next_result = None
+    last_call = None
+
+    def __init__(self):
+        pass
+
+    def merge(image_seq):
+        self.last_call = image_seq
+        return self.next_result
+
 
 unittest.main()
