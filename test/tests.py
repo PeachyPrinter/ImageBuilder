@@ -109,8 +109,8 @@ class MapperTest(unittest.TestCase):
 
 class ImageBuilderApiTest(unittest.TestCase, TestHelpers):
     test_image_1 = array([[[255, 255, 255],[0, 0, 0],[  0,   0,   0]]], dtype=uint8)
-    test_image_2 = array([[[255, 255, 255],[0, 0, 0],[  0,   0,   0]]], dtype=uint8)
-    test_image_3 = array([[[255, 255, 255],[0, 0, 0],[  0,   0,   0]]], dtype=uint8)
+    test_image_2 = array([[[0, 0, 0],[255, 255, 255],[  0,   0,   0]]], dtype=uint8)
+    test_image_3 = array([[[0, 0, 0],[0, 0, 0],[255, 255, 255]]], dtype=uint8)
 
     @patch('mapper.Mapper')
     def test_given_an_empty_seq_should_return_None(self, mock_mapper):
@@ -130,24 +130,40 @@ class ImageBuilderApiTest(unittest.TestCase, TestHelpers):
         self.assertNumpyArrayEquals(self.test_image_1, result)
         self.assertEquals(1, mock.get_threshold_array.call_count)
 
+    @patch('mapper.Mapper')
+    def test_given_an_image_seq_of_many_should_merged_image(self, mock_mapper):
+        expected_image = [[[255, 255, 255],[255, 255, 255],[255, 255, 255]]]
+        list_of_return_values= [self.test_image_1,self.test_image_2,self.test_image_3]
+        def side_effect(self):
+            return list_of_return_values.pop()
+        mock = mock_mapper.return_value
+        mock.get_threshold_array.side_effect = side_effect
+
+        iba = ImageBuilderApi(mock)
+        
+        result = iba.merge([self.test_image_1,self.test_image_2,self.test_image_3])
+        
+        self.assertNumpyArrayEquals(expected_image, result)
+        self.assertEquals(3, mock.get_threshold_array.call_count)
+
 class ImageBuilderTest(unittest.TestCase):
     test_data_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'test_data')
     source_image_path = os.path.join(test_data_path, 'source_images')
     test_output_file = 'out.png'
     stub_image_builder_api = None
+    test_image_1 = array([[[255, 255, 255],[0, 0, 0],[  0,   0,   0]]], dtype=uint8)
     
     def setUp(self):
         if os.path.exists(self.test_output_file):
             os.remove(self.test_output_file)
-        self.stub_image_builder_api = StubImageBuilderApi()
 
     def test_ImageBuilder_should_throw_exception_if_bad_directory_found(self):
         source_folder = "does_not_exist"
         passed = False
         
         try:
-            ImageBuilder(source_folder, self.test_output_file, self.stub_image_builder_api)
-            passed = False
+            image_builder = ImageBuilder(None)
+            image_builder.build(source_folder, self.test_output_file)
         except:
             passed = True
 
@@ -157,23 +173,28 @@ class ImageBuilderTest(unittest.TestCase):
         source_folder = os.path.dirname(os.path.abspath(__file__))
 
         try:
-            ImageBuilder(source_folder, self.test_output_file, self.stub_image_builder_api)
+            image_builder = ImageBuilder(None)
+            image_builder.build(source_folder, self.test_output_file)
             passed = False
         except Exception as ex:
             passed = True
 
         self.assertTrue(passed)
 
-class StubImageBuilderApi(object):
-    next_result = None
-    last_call = None
+    @patch('image_builder.ImageBuilderApi')
+    def test_ImageBuilder_should_call_ImageBuilderAPI_with_file_seq(self, mock_api):
+        mock_image_builder_api = mock_api.return_value
+        mock_image_builder_api.merge.return_value = self.test_image_1
 
-    def __init__(self):
-        pass
+        image_builder = ImageBuilder(mock_image_builder_api)
+        image_builder.build(self.source_image_path, self.test_output_file)
 
-    def merge(image_seq):
-        self.last_call = image_seq
-        return self.next_result
+        self.assertEquals(1, mock_image_builder_api.merge.call_count)
+        self.assertEquals(3, len(list(mock_image_builder_api.merge.call_args_list[0][0][0])))
+        self.assertTrue(os.path.exists(self.test_output_file))
+        
+
+
 
 
 unittest.main()
