@@ -13,7 +13,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..'
 from mapper import Mapper
 from image_builder import ImageBuilder, ImageBuilderApi
 
-class MapperTest(unittest.TestCase):
+class MapperTest(unittest.TestCase, TestHelpers):
     test_data_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'test_data')
 
     def test_given_an_image_point_map_returned(self):
@@ -105,7 +105,34 @@ class MapperTest(unittest.TestCase):
         new_result = mapper.get_points(img)
         self.assertEquals(new_expected,new_result)
 
-    # TODO JT 2014-02-28 - Test should be wrapped around thresholdmap as it's now public
+    def test_get_threshold_array_given_an_image_point(self):
+        img = cv2.imread(os.path.join(self.test_data_path,'SimpleTestImage1.png'),1)
+        def test(x,y):
+            if x == y: 
+                return 255
+            else:
+                return 0
+        expected = [[test(x,y) for x in range(0,20)] for y in range(0,20)]
+        
+        colour = [255,255,255]
+        threshold = 0
+        mapper = Mapper(colour,threshold)
+        actual = mapper.get_threshold_array(img)
+        self.assertNumpyArrayEquals(expected,actual)
+
+    def test_given_an_colour_image_and_specific_colour_a_point_map_returned(self):
+        img = cv2.imread(os.path.join(self.test_data_path,'SimpleTestImage2.png'),1)
+        def test(x,y):
+            if x == y: 
+                return 255
+            else:
+                return 0
+        expected = [[test(x,y) for x in range(0,20)] for y in range(0,20)]
+        colour = [255,128,0]
+        threshold = 0
+        mapper = Mapper(colour,threshold)
+        actual = mapper.get_threshold_array(img)
+        self.assertNumpyArrayEquals(expected,actual)
 
 class ImageBuilderApiTest(unittest.TestCase, TestHelpers):
     test_image_1 = array([[[255, 255, 255],[0, 0, 0],[  0,   0,   0]]], dtype=uint8)
